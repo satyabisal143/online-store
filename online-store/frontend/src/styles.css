@@ -1,0 +1,20 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f5f6f8; color: #222; }
+.app { max-width: 1000px; margin: 0 auto; padding: 16px; }
+header { display: flex; justify-content: space-between; align-items: center; }
+nav button { margin-left: 8px; }
+button { background: #2d6cdf; color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+button:disabled { background: #aab; cursor: not-allowed; }
+nav button:not(.active) { background: #9ab; }
+button.link { background: none; color: #c33; padding: 0 4px; }
+.layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.card, .cart { background: #fff; border-radius: 8px; padding: 14px; box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+.order { margin-bottom: 12px; }
+.price { font-weight: 600; margin: 4px 0; }
+.stock { color: #667; font-size: 13px; margin: 0 0 8px; }
+.cart-row { display: flex; justify-content: space-between; margin: 6px 0; font-size: 14px; }
+.total { font-weight: 700; }
+.message { padding: 10px 14px; border-radius: 6px; margin: 12px 0; cursor: pointer; }
+.message.ok { background: #dff5e1; }
+.message.error { background: #fde1e1; }
+@media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
