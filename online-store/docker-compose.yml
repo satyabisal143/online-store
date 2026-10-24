@@ -1,0 +1,37 @@
+# Local PostgreSQL for the online-store services.
+# Start:  docker compose up -d      Stop:  docker compose down      Wipe data:  docker compose down -v
+services:
+  postgres:
+    image: postgres:16
+    container_name: onlinestore-postgres
+    environment:
+      POSTGRES_USER: store          # one login shared by both service databases (fine for local learning)
+      POSTGRES_PASSWORD: store
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"                 # reachable from your PC at localhost:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data                              # data survives container restarts
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/init.sql  # creates productdb + orderdb on first start
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U store"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  pgadmin:                          # web UI to browse tables: http://localhost:5050
+    image: dpage/pgadmin4:8
+    container_name: onlinestore-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"          # single-user mode, no login screen
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

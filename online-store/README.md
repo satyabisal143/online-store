@@ -50,6 +50,37 @@ npm run dev
 ```
 Open http://localhost:5173.
 
+## Run everything locally with PostgreSQL
+
+1. Install **Docker Desktop** (https://www.docker.com/products/docker-desktop), start it, then in this folder:
+   ```powershell
+   docker compose up -d        # PostgreSQL on :5432 (databases productdb + orderdb), pgAdmin on :5050
+   .\run-local.ps1             # opens one window per service + the React dev server
+   ```
+   No Docker yet? `.\run-local.ps1 -H2` runs the same stack on in-memory H2 (data resets on restart).
+2. Open http://localhost:5173, place an order, then look at the data:
+   - pgAdmin: http://localhost:5050 -> Add Server -> host `host.docker.internal`, port `5432`, user/password `store`/`store`
+   - or in a terminal: `docker exec -it onlinestore-postgres psql -U store -d productdb -c "select * from product;"`
+3. The `postgres` Spring profile (`application-postgres.yml`) turns on `show-sql`, so every SQL statement is printed in the service window.
+   Data now survives restarts; wipe it with `docker compose down -v`.
+
+## Debugging step by step
+
+**Backend (IntelliJ):** open `ProductServiceApplication` / `OrderServiceApplication` / `ApiGatewayApplication` / `DiscoveryServiceApplication`,
+click the green arrow -> **Debug**. For PostgreSQL, edit the run configuration -> *Active profiles* = `postgres`.
+Good breakpoints to learn the flow of one order:
+1. `OrderController.create` - the JSON arrives here
+2. `OrderService.create` - the loop that reserves stock
+3. `ProductClient.reserve` - the HTTP call to product-service
+4. `ProductService.reserve` (in the product-service debug session) - stock is reduced
+5. `OrderService.releaseAll` - hit it by ordering more than is in stock for the 2nd item
+
+**Frontend (browser):** F12 -> **Network** tab -> click a request to `localhost:8080/api/...` and read *Payload* and *Response*.
+Put `debugger;` in `frontend/src/api.js` (inside `request`) to pause there with DevTools open.
+
+**Without the UI:** `Invoke-RestMethod http://localhost:8080/api/products` and
+`Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/orders -ContentType application/json -Body '{"items":[{"productId":1,"quantity":2}]}'`
+
 ## API quick reference (via gateway, port 8080)
 
 - `GET /api/products`, `GET /api/products/{id}`, `POST/PUT/DELETE /api/products`

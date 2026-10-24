@@ -1,0 +1,14 @@
+# Activated with --spring.profiles.active=postgres (see run-local.ps1). Overrides the H2 defaults.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orderdb
+    username: store
+    password: store
+  jpa:
+    hibernate:
+      ddl-auto: update        # keep data between restarts (create-drop would wipe it)
+    show-sql: true            # print every SQL statement - great for learning/debugging
+
+logging:
+  level:
+    com.onlinestore: DEBUG    # our own code logs at debug level
