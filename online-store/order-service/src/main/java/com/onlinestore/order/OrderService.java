@@ -11,10 +11,12 @@ public class OrderService { // business logic for orders
 
     private final OrderRepository repository; // saves and loads orders
     private final ProductClient productClient; // talks to product-service
+    private final PendingReleaseService pendingReleases; // remembers releases that failed so they can be retried
 
-    public OrderService(OrderRepository repository, ProductClient productClient) { // Spring injects both
+    public OrderService(OrderRepository repository, ProductClient productClient, PendingReleaseService pendingReleases) { // Spring injects all three
         this.repository = repository; // keep the repository
         this.productClient = productClient; // keep the client
+        this.pendingReleases = pendingReleases; // keep the retry store
     } // end of constructor
 
     @Transactional // if anything throws, the order row is rolled back too
@@ -78,8 +80,8 @@ public class OrderService { // business logic for orders
         for (OrderLine line : lines) { // go through every line
             try { // isolate each call
                 productClient.release(line.getProductId(), line.getQuantity()); // return the units
-            } catch (RuntimeException ignored) { // product-service might be down; keep going
-                // a real system would queue a retry here
+            } catch (RuntimeException e) { // product-service might be down; keep going
+                pendingReleases.record(line.getProductId(), line.getQuantity()); // queue it (own transaction) so the stock is not lost
             } // end of try/catch
         } // end of loop
     } // end of releaseAll

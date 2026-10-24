@@ -13,6 +13,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,8 +26,24 @@ class OrderServiceTest {
     @Mock
     ProductClient productClient;
 
+    @Mock
+    PendingReleaseService pendingReleases;
+
     @InjectMocks
     OrderService service;
+
+    @Test
+    void failedReleaseIsQueuedForRetry() {
+        Order order = new Order();
+        order.addLine(new OrderLine(1L, "Mouse", new BigDecimal("10"), 3));
+        when(repository.findById(7L)).thenReturn(Optional.of(order));
+        when(repository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        doThrow(new RuntimeException("product-service down")).when(productClient).release(1L, 3); // release fails
+
+        service.cancel(7L); // cancelling must still succeed
+
+        verify(pendingReleases).record(1L, 3); // the failed release was stored for the retry job
+    }
 
     @Test
     void totalIsSumOfLines() {
