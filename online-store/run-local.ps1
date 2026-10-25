@@ -4,8 +4,8 @@
 param([switch]$H2)
 
 $root = $PSScriptRoot
-$profile = if ($H2) { "" } else { '"-Dspring-boot.run.profiles=postgres"' }   # quoted: PowerShell splits unquoted -Dfoo.bar=x at the dot
-$ssl = '$env:JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStoreType=Windows-ROOT"; '   # corporate-proxy fix, harmless otherwise
+$profile = if ($H2) { "" } else { '$env:SPRING_PROFILES_ACTIVE=''postgres''; ' }   # env var, not -D: quoting -Dfoo.bar=x breaks across windows
+$ssl = '$env:JAVA_TOOL_OPTIONS=''-Djavax.net.ssl.trustStoreType=Windows-ROOT''; '   # corporate-proxy fix, harmless otherwise
 
 function Start-Window($title, $command) {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle='$title'; cd '$root'; $ssl$command"
@@ -13,9 +13,9 @@ function Start-Window($title, $command) {
 
 Start-Window "discovery (8761)" ".\mvnw.cmd -pl discovery-service spring-boot:run"
 Start-Sleep 25                                     # Eureka must be up before the others register
-Start-Window "product (8081)"   ".\mvnw.cmd -pl product-service spring-boot:run $profile"
+Start-Window "product (8081)"   "$profile.\mvnw.cmd -pl product-service spring-boot:run"
 Start-Sleep 10
-Start-Window "order (8082)"     ".\mvnw.cmd -pl order-service spring-boot:run $profile"
+Start-Window "order (8082)"     "$profile.\mvnw.cmd -pl order-service spring-boot:run"
 Start-Window "gateway (8080)"   ".\mvnw.cmd -pl api-gateway spring-boot:run"
 Start-Window "frontend (5173)"  "cd frontend; if (-not (Test-Path node_modules)) { npm install }; npm run dev"
 
