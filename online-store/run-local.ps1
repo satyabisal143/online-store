@@ -4,7 +4,7 @@
 param([switch]$H2)
 
 $root = $PSScriptRoot
-$profile = if ($H2) { "" } else { "-Dspring-boot.run.profiles=postgres" }
+$profile = if ($H2) { "" } else { '"-Dspring-boot.run.profiles=postgres"' }   # quoted: PowerShell splits unquoted -Dfoo.bar=x at the dot
 $ssl = '$env:JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStoreType=Windows-ROOT"; '   # corporate-proxy fix, harmless otherwise
 
 function Start-Window($title, $command) {
